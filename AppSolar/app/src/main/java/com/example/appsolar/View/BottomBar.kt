@@ -3,6 +3,8 @@ package com.example.appsolar.View
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -29,6 +31,10 @@ fun BottomBar(
         BottomItem(
             "DashBoard",
             Icons.Default.Dashboard
+        ),
+        BottomItem(
+            "Predición",
+            Icons.Default.EventAvailable
         ),
         BottomItem(
             "Chat IA",

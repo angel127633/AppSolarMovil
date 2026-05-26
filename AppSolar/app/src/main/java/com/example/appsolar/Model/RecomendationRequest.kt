@@ -32,7 +32,7 @@ data class RecommendationData(
     val radiationToday: Double,
     val solarIndex: Int,
     val reasoning: String,
-    val recommendations: List<Recommendation>,
+    var recommendations: List<Recommendation>,
     val totalSavingsCopDay: Int,
     val totalSavingsCopMonth: Int,
     val alert: String?

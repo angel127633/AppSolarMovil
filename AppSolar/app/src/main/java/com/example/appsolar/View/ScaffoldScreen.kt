@@ -38,6 +38,7 @@ fun Renderizado(
 ) {
     when (selected) {
         0 -> DashBoardScreen()
-        1 -> ChatIAScreen()
+        1 -> PredictiveEnergyScreen()
+        2 -> ChatIAScreen()
     }
 }

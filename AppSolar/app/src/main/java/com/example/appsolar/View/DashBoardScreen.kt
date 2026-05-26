@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -52,6 +53,7 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -61,6 +63,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -81,6 +84,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.appsolar.Model.ParsedDate
@@ -114,6 +118,7 @@ fun DashBoardScreen(
     val notifications by viewModelRecomendations.notifications.collectAsState()
     val scoreData by solarViewModel.dataScore.collectAsState()
     val recomendationsData by viewModelRecomendations.recomendationsData.collectAsState()
+    val isLoading by viewModelRecomendations.isLoading.collectAsState()
     var expandedTipPoblacion by remember { mutableStateOf(false) }
     var valueTipPoblacion by remember { mutableStateOf("Empresa") }
     val list = listOf(
@@ -124,6 +129,7 @@ fun DashBoardScreen(
     var showNotifications by remember { mutableStateOf(false) }
     var currentNotificationIndex by remember { mutableStateOf(0) }
     val context = LocalContext.current as Activity
+    var show by remember { mutableStateOf(false) }
 
     LaunchedEffect(notifications) {
 
@@ -255,7 +261,7 @@ fun DashBoardScreen(
                     readOnly = true,
                     singleLine = true,
                     label = {
-                        Text("Tipo Poblacion")
+                        Text("Poblacion")
                     },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedLabelColor = Color.Gray,
@@ -281,6 +287,9 @@ fun DashBoardScreen(
                         DropdownMenuItem(text = { Text(it) }, onClick = {
                             expandedTipPoblacion = false
                             valueTipPoblacion = it
+
+                            recomendationsData?.recommendations = emptyList()
+
                             if (valueTipPoblacion == "Comunidad") {
                                 val request = RecommendationRequest(
                                     targetType = "community",
@@ -505,39 +514,47 @@ fun DashBoardScreen(
                             ) {
                                 Column() {
                                     Text(
-                                        "Impacto economico",
+                                        "Impacto económico",
                                         color = Color.White,
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
+
                                     Spacer(modifier.height(10.dp))
+
                                     Text(
-                                        "Ahorro estimado hoy",
+                                        "Ahorro estimado de hoy",
                                         fontSize = 15.sp,
                                         color = Color.Gray
                                     )
+
                                     Row(
                                         verticalAlignment = Alignment.Bottom,
                                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                                     ) {
                                         Text(
                                             "$${
-                                                formatCurrency(value = recomendationsData?.totalSavingsCopDay ?: 80000)
+                                                formatCurrency(
+                                                    value = recomendationsData?.totalSavingsCopDay ?: 80000
+                                                )
                                             }",
-                                            fontSize = 28.sp,
+                                            fontSize = 25.sp,
                                             color = Color.Green,
                                             fontWeight = FontWeight.Bold
                                         )
+
                                         Text(
                                             "COP",
-                                            fontSize = 15.sp,
+                                            fontSize = 13.sp,
                                             color = Color.Gray,
                                             modifier = modifier.padding(bottom = 1.dp)
                                         )
                                     }
+
                                     Spacer(modifier.height(10.dp))
+
                                     Text(
-                                        "Ahorro estimado este mes",
+                                        "Ahorro estimado del mes",
                                         fontSize = 15.sp,
                                         color = Color.Gray
                                     )
@@ -549,13 +566,13 @@ fun DashBoardScreen(
                                             "$${
                                                 formatCurrency(recomendationsData?.totalSavingsCopMonth ?: 2475000)
                                             }",
-                                            fontSize = 28.sp,
+                                            fontSize = 25.sp,
                                             color = Color.White,
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
                                             "COP",
-                                            fontSize = 15.sp,
+                                            fontSize = 13.sp,
                                             color = Color.Gray,
                                             modifier = modifier.padding(bottom = 1.dp)
                                         )
@@ -630,120 +647,133 @@ fun DashBoardScreen(
                                             tint = Color.Green
                                         )
                                     }
-                                    LazyRow() {
-                                        items(recomendationsData?.recommendations ?: emptyList()) {
-                                            Card(
-                                                modifier
-                                                    .width(232.dp)
-                                                    .height(420.dp),
-                                                border = BorderStroke(2.dp, Color.Gray),
-                                                shape = RoundedCornerShape(10.dp),
-                                                colors = CardDefaults.cardColors(
-                                                    containerColor = Color.Transparent
-                                                )
+                                    if (isLoading) {
+                                        Box(
+                                            modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator()
+                                        }
+                                    } else {
+                                        LazyRow() {
+                                            items(
+                                                recomendationsData?.recommendations ?: emptyList()
                                             ) {
-                                                Column(
+                                                Card(
                                                     modifier
-                                                        .fillMaxSize()
-                                                        .padding(
-                                                            start = 15.dp,
-                                                            end = 15.dp,
-                                                            top = 20.dp,
-                                                            bottom = 10.dp
-                                                        ),
-                                                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                                                    horizontalAlignment = Alignment.CenterHorizontally
+                                                        .width(232.dp)
+                                                        .height(420.dp),
+                                                    border = BorderStroke(2.dp, Color.Gray),
+                                                    shape = RoundedCornerShape(10.dp),
+                                                    colors = CardDefaults.cardColors(
+                                                        containerColor = Color.Transparent
+                                                    )
                                                 ) {
-                                                    Text(
-                                                        it.title,
-                                                        fontSize = 14.sp,
-                                                        color = Color.White,
-                                                        textAlign = TextAlign.Center,
-                                                        fontWeight = FontWeight.Bold,
-                                                        maxLines = 2,
-                                                        overflow = TextOverflow.Ellipsis
-                                                    )
-                                                    Text(
-                                                        it.description,
-                                                        fontSize = 12.sp,
-                                                        color = Color.White,
-                                                        textAlign = TextAlign.Justify,
-                                                        maxLines = 5,
-                                                        overflow = TextOverflow.Ellipsis,
-                                                        modifier = modifier.height(135.dp)
-                                                    )
-                                                    Box(
+                                                    Column(
                                                         modifier
-                                                            .width(70.dp)
-                                                            .height(30.dp)
-                                                            .clip(RoundedCornerShape(15.dp))
-                                                            .background(
-                                                                if (it.priority == "alta") Color(
-                                                                    0xFF4CAF50
-                                                                ) else if (it.priority == "media") Color(
-                                                                    0xFFB78602
-                                                                ) else Color(0xFF03A9F4)
+                                                            .fillMaxSize()
+                                                            .padding(
+                                                                start = 15.dp,
+                                                                end = 15.dp,
+                                                                top = 20.dp,
+                                                                bottom = 10.dp
                                                             ),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        Text(
-                                                            it.priority,
-                                                            color = Color.White,
-                                                            fontSize = 15.sp
-                                                        )
-                                                    }
-                                                    Spacer(modifier.height(3.dp))
-                                                    Row(
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                        horizontalArrangement = Arrangement.spacedBy(
+                                                        verticalArrangement = Arrangement.spacedBy(
                                                             10.dp
-                                                        )
-                                                    ) {
-                                                        Icon(
-                                                            Icons.Default.AccessTime, null,
-                                                            tint = Color.Gray
-                                                        )
-                                                        Text(
-                                                            it.timeWindow,
-                                                            color = Color.Gray,
-                                                            fontSize = 14.sp
-                                                        )
-                                                    }
-                                                    Box(
-                                                        modifier
-                                                            .fillMaxWidth()
-                                                            .height(2.dp)
-                                                            .clip(RoundedCornerShape(10.dp))
-                                                            .background(Color.Gray)
-                                                    )
-                                                    Text(
-                                                        "Ahorro estimado",
-                                                        fontSize = 15.sp,
-                                                        color = Color.Gray
-                                                    )
-                                                    Row(
-                                                        horizontalArrangement = Arrangement.spacedBy(
-                                                            5.dp
                                                         ),
-                                                        verticalAlignment = Alignment.Bottom
+                                                        horizontalAlignment = Alignment.CenterHorizontally
                                                     ) {
                                                         Text(
-                                                            "$${
-                                                                formatCurrency(it.savingsCopDay)
-                                                            }",
-                                                            color = Color.Green,
-                                                            fontSize = 23.sp,
-                                                            fontWeight = FontWeight.SemiBold
+                                                            it.title,
+                                                            fontSize = 14.sp,
+                                                            color = Color.White,
+                                                            textAlign = TextAlign.Center,
+                                                            fontWeight = FontWeight.Bold,
+                                                            maxLines = 2,
+                                                            overflow = TextOverflow.Ellipsis
                                                         )
                                                         Text(
-                                                            "COP",
-                                                            color = Color.Gray,
-                                                            fontSize = 14.sp
+                                                            it.description,
+                                                            fontSize = 12.sp,
+                                                            color = Color.White,
+                                                            textAlign = TextAlign.Justify,
+                                                            maxLines = 5,
+                                                            overflow = TextOverflow.Ellipsis,
+                                                            modifier = modifier.height(135.dp)
                                                         )
+                                                        Box(
+                                                            modifier
+                                                                .width(70.dp)
+                                                                .height(30.dp)
+                                                                .clip(RoundedCornerShape(15.dp))
+                                                                .background(
+                                                                    if (it.priority == "alta") Color(
+                                                                        0xFF4CAF50
+                                                                    ) else if (it.priority == "media") Color(
+                                                                        0xFFB78602
+                                                                    ) else Color(0xFF03A9F4)
+                                                                ),
+                                                            contentAlignment = Alignment.Center
+                                                        ) {
+                                                            Text(
+                                                                it.priority,
+                                                                color = Color.White,
+                                                                fontSize = 15.sp
+                                                            )
+                                                        }
+                                                        Spacer(modifier.height(3.dp))
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.spacedBy(
+                                                                10.dp
+                                                            )
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Default.AccessTime, null,
+                                                                tint = Color.Gray
+                                                            )
+                                                            Text(
+                                                                it.timeWindow,
+                                                                color = Color.Gray,
+                                                                fontSize = 14.sp
+                                                            )
+                                                        }
+                                                        Box(
+                                                            modifier
+                                                                .fillMaxWidth()
+                                                                .height(2.dp)
+                                                                .clip(RoundedCornerShape(10.dp))
+                                                                .background(Color.Gray)
+                                                        )
+                                                        Text(
+                                                            "Ahorro estimado",
+                                                            fontSize = 15.sp,
+                                                            color = Color.Gray
+                                                        )
+                                                        Row(
+                                                            horizontalArrangement = Arrangement.spacedBy(
+                                                                5.dp
+                                                            ),
+                                                            verticalAlignment = Alignment.Bottom
+                                                        ) {
+                                                            Text(
+                                                                "$${
+                                                                    formatCurrency(it.savingsCopDay)
+                                                                }",
+                                                                color = Color.Green,
+                                                                fontSize = 23.sp,
+                                                                fontWeight = FontWeight.SemiBold
+                                                            )
+                                                            Text(
+                                                                "COP",
+                                                                color = Color.Gray,
+                                                                fontSize = 14.sp
+                                                            )
+                                                        }
                                                     }
                                                 }
+                                                Spacer(modifier.width(20.dp))
                                             }
-                                            Spacer(modifier.width(20.dp))
                                         }
                                     }
                                 }
@@ -752,7 +782,7 @@ fun DashBoardScreen(
                         Box(
                             modifier
                                 .fillMaxWidth()
-                                .height(600.dp)
+                                .height(665.dp)
                                 .border(2.dp, Color.Gray.copy(0.5f), RoundedCornerShape(10.dp))
                                 .padding(start = 15.dp, end = 15.dp, top = 20.dp, bottom = 10.dp)
                         ) {
@@ -773,13 +803,14 @@ fun DashBoardScreen(
                                         Spacer(modifier.width(10.dp))
                                         Column() {
                                             Text(
-                                                "Pronostico de los proximos 16 dias",
+                                                "Pronóstico de los próximos ${if (show) 16 else 5} días",
                                                 fontSize = 23.sp,
                                                 color = Color.White,
                                                 fontWeight = FontWeight.Bold
                                             )
+
                                             Text(
-                                                "Informacion solar para una mejor planificacion",
+                                                "Información solar para una mejor planificación",
                                                 fontSize = 13.sp,
                                                 color = Color.Gray
                                             )
@@ -832,11 +863,14 @@ fun DashBoardScreen(
                                 LazyRow(
                                     horizontalArrangement = Arrangement.spacedBy(20.dp)
                                 ) {
-                                    items(forecastData?.data?.data ?: emptyList()) {
+                                    items(
+                                        forecastData?.data?.data?.take(if (show) 16 else 5)
+                                            ?: emptyList()
+                                    ) {
                                         Card(
                                             modifier
                                                 .width(300.dp)
-                                                .fillMaxHeight(),
+                                                .height(500.dp),
                                             colors = CardDefaults.cardColors(
                                                 containerColor = Color.Transparent
                                             ),
@@ -1043,7 +1077,8 @@ fun DashBoardScreen(
                                                         )
                                                         Spacer(modifier.width(10.dp))
                                                         Column() {
-                                                            val solarStatus = getSolarStatus(it.solarIndex)
+                                                            val solarStatus =
+                                                                getSolarStatus(it.solarIndex)
                                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                                 Text(
                                                                     "Indice Solar: ",
@@ -1066,6 +1101,20 @@ fun DashBoardScreen(
                                                 }
                                             }
                                         }
+                                    }
+                                }
+                                Box(
+                                    modifier.fillMaxWidth(),
+                                    contentAlignment = Alignment.TopEnd
+                                ) {
+                                    TextButton({
+                                        show = !show
+                                    }) {
+                                        Text(
+                                            "Ver mas",
+                                            color = Color(0xFF2196F3),
+                                            fontSize = 20.sp
+                                        )
                                     }
                                 }
                             }
@@ -1172,7 +1221,8 @@ fun DashBoardScreen(
                         items(notifications) {
                             Card(
                                 modifier
-                                    .fillMaxWidth(),
+                                    .fillMaxWidth()
+                                    .heightIn(min = 100.dp),
                                 colors = CardDefaults.cardColors(
                                     containerColor = Color.Transparent
                                 ),
@@ -1219,9 +1269,7 @@ fun DashBoardScreen(
                                         it.message,
                                         color = Color.White,
                                         fontSize = 16.sp,
-                                        textAlign = TextAlign.Justify,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis
+                                        textAlign = TextAlign.Justify
                                     )
                                 }
                             }
